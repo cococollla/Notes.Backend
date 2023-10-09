@@ -2,11 +2,12 @@ using Notes.Application;
 using Notes.Application.Common.Mappings;
 using Notes.Application.Interfaces;
 using Notes.Persistence;
+using System.Reflection;
 using WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddApplication();
 builder.Services.AddControllers();
 builder.Services.AddPersistence(builder.Configuration);
@@ -25,7 +26,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddSwaggerGen(config =>
+    {
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        config.IncludeXmlComments(xmlPath);
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
@@ -43,6 +49,12 @@ using (var scope = builder.Services.BuildServiceProvider().CreateScope())
     }
 }
 
+app.UseSwagger();
+app.UseSwaggerUI(config =>
+    {
+        config.RoutePrefix = string.Empty;
+        config.SwaggerEndpoint("swagger/v1/swagger.json", "Notes API");
+    });
 app.UseCustomExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthorization();
